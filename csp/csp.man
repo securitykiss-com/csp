@@ -1,0 +1,1026 @@
+[comment {-*- tcl -*- doctools manpage}]
+[vset VERSION 0.1.0]
+[manpage_begin csp n [vset VERSION]]
+[keywords csp]
+[keywords golang]
+[keywords concurrency]
+[keywords callback]
+[keywords channel]
+[keywords actors]
+[copyright {2015 SecurityKISS Ltd <open.source@securitykiss.com> - MIT License - Feedback and bug reports are welcome}]
+[titledesc {Golang style concurrency library based on Communicating Sequential Processes}]
+[moddesc   {Concurrency}]
+[category  {Concurrency}]
+[require Tcl 8.6]
+[require csp [opt [vset VERSION]]]
+[description]
+[para]
+The [package csp] package provides two concurrency primitives namely [term coroutines] and [term channels] which allow concurrent programming in the style of [uri https://en.wikipedia.org/wiki/Go_(programming_language) Golang].
+[para]
+The concepts originate in Hoare's [uri https://en.wikipedia.org/wiki/Communicating_sequential_processes {Communicating Sequential Processes}] while the syntax mimics the Golang implementation.
+[para]
+The CSP concurrency model may be visualized as a set of independent processes (coroutines) sending and receiving messages to the named channels. The control flow in the coroutines is coordinated at the points of sending and receiving messages i.e. the coroutine may need to wait while trying to send or receive.
+Since it must work in a single-threaded interpreter, waiting is non-blocking. Instead of blocking a waiting coroutine gives way to other coroutines.
+[para]
+This concurrency model may also be seen as a generalization of Unix [uri https://en.wikipedia.org/wiki/Named_pipe {named pipes}] where processes and pipes correspond to coroutines and channels.
+
+[section Concepts]
+
+[list_begin definitions]
+
+[def [cmd channel]]
+
+    [list_begin definitions]
+    [def {There are two types of channels.}]
+        [list_begin definitions]
+            
+            [def [term {Unbuffered channels}]]
+            [para]
+            The unbuffered channel is a single value container that can be imagined as a rendez-vous venue where the sender must wait for the receiver to collect the message.
+            By default channels are unbuffered. 
+            
+            [def [term {Buffered channels}]]
+            [para]
+            The buffered channel behaves like a FIFO queue. 
+        [list_end]
+    [list_end]
+
+    [para]
+    [list_begin definitions]
+    [def {Whether receiver need to wait while trying to receive from a channel depends on the channel's internal state:}]
+        [list_begin definitions]
+        [def [term {ready for receive}]]
+            The buffered channel is ready for receive when it is not empty.
+            The unbuffered channel is ready for receive if there exists a sender waiting with a message on this channel.
+    
+        [def [term {ready for send}]]
+            The buffered channel is ready for send when it is not full.
+            The unbuffered channel is ready for send if there is no other sender already waiting on this channel. Note that 
+        [list_end]
+    [list_end]
+
+    [para]
+    Channel is created with:
+    [para]
+    [cmd ::csp::channel] [arg chanVar] [arg [opt size]]
+    [para]
+    If the size is zero (default) the created channel is unbuffered.
+    [para]
+    Channel may be closed with:
+    [para]
+    [cmd channelObj] [arg close]
+    [para]
+    and is destroyed automatically when all messages are received (the channel is drained).
+
+
+    
+    [para]
+    [list_begin definitions]
+    [def {Channel lifecycle is described by 3 possible states:}]
+        [list_begin definitions]
+            [def [term created]]
+            Once the channel is created you can send to and receive from the channel.
+            [def [term closed]]
+            When the channel is closed you can still receive from the channel but you cannot send to it.
+            Trying to send to the closed channel throws an error.
+            It is responsibility of the library user to close the unused channels.
+            [def [term destroyed]]
+            The channel does not exist. 
+            After receiving all messages from the closed channel, the channel is destroyed.
+            Trying to send to or receive from the destroyed channel throws an error.
+        [list_end]
+    [list_end]
+    Note that creating a large number of channels that are properly closed but not emptied may result in a memory leak.
+
+
+[def [cmd coroutine]]
+[para]
+    [term Coroutine] is a procedure executing concurrently with other coroutines. 
+    [term Coroutine] may send messages to and receive messages from [term channels]. Any coroutine may act as a sender or receiver at different times. If [term channel] is not ready a coroutine waits by giving way to other coroutines. This makes the coroutine execution multiplexed at the points of sending to or receiving from channels.
+    [para]
+
+    [term Coroutine] is created with:
+
+    [para]
+        [cmd ::csp::go] [arg procName] [arg [opt args]]
+
+    [para]
+    where [arg procName] is the name of the existing Tcl procedure that will be run as a coroutine.
+    You can create many coroutines from a single Tcl procedure, possibly called with different arguments.
+
+    [para]
+    Coroutine is destroyed when its execution ends.
+
+    [para]
+    We reuse the term [term coroutine] known from Tcl (modelled on Lua) coroutines, but they are are not equivalent. [package csp] coroutines are implemented in terms of Tcl coroutines and it's better not to mix [package csp] and Tcl coroutines in a single program.
+[list_end]
+
+
+
+[section COMMANDS]
+
+[para]
+
+[list_begin definitions]
+[call [cmd ::csp::go] [arg procName] [opt [arg args]]]    
+    Create a coroutine by calling [arg procName] with arguments [arg args]. Returns internal name of the coroutine.
+    
+[call [cmd ::csp::channel] [arg channelVar] [opt [arg size]]]
+    Create a channel object that will be further referred as [cmd channelObj]. The name of the object is contained in variable [arg channelVar].
+    [list_begin arguments]
+        [arg_def var channelVar] 
+            Variable channelVar that will be created and will contiain the channel object name.
+        [arg_def number size] 
+            Size of the channel buffer. If size is zero (default) the channel is unbuffered.
+    [list_end]
+    Returns channel object name.
+    
+[call [cmd channelObj] [arg close]]
+    Close the channel [arg channelObj]. Returns empty string.
+
+[call [cmd channelObj] [arg <-] [arg msg]]
+    Send [arg msg] to channel [arg channelObj] in a coroutine. Returns empty string.
+    
+[call [cmd channelObj] [arg <-!] [arg msg]]
+    Send [arg msg] to channel [arg channelObj] in a script (in the Tcl program main control flow). It is implemented using vwait and has many limitations. Use with care and only in simple scenarios. Returns empty string.
+    
+[call [cmd ::csp::<-] [arg channelObj]]
+    Receive from channel [arg channelObj] in a coroutine. Returns the message received from the channel.
+
+[call [cmd ::csp::<-!] [arg channelObj]]
+    Receive from channel [arg channelObj] in a script (in the Tcl program main control flow). Returns the message received from the channel.
+
+[call [cmd ::csp::select] [arg operation] [arg body]]
+    Evaluate set of channels to find which channels are ready and run corresponding block of code. Returns the result of evaluation of the block of code.
+[para]
+    [list_begin arguments]
+        [arg_def list operation]
+            Operation takes one of 3 forms:
+            [para]
+            [cmd <-] [arg channelObj]
+            [para]
+            for evaluating whether the [arg channelObj] is ready for receive, or
+            [para]
+            [arg channelObj] [cmd <-]
+            [para]
+            for evaluating whether the [arg channelObj] is ready for send, or
+            [para]
+            default
+            [para]
+            for evaluating default case if no channel is ready.
+        [arg_def block body] 
+            Block of code to be evaluated.
+    [list_end]
+[para]
+The select command provides a way to handle multiple channels. It is a switch like statement where channels are evaluated for readiness. The select command makes the coroutine wait until at least one channel is ready. If multiple channels can proceed, [cmd select] chooses pseudo-randomly. A default clause, if present, executes immediately if no channel is ready.
+
+[call [cmd ::csp::range] [arg varName] [arg channelObj] [arg body]]
+    Receive from channel until closed in a coroutine.
+    [para]
+    This is a [cmd foreach] like construct that iterates by receiving messages from channel one by one until channel is closed. If channel is not ready for receive, [cmd range] waits.
+
+[call [cmd ::csp::range!] [arg varName] [arg channelObj] [arg body]]
+    Receive from channel until closed in the main control flow. 
+    [para]
+    A version of [cmd range] command that can be used outside of a coroutine. It is implemented using vwait and has many limitations. Use with care and only in simple scenarios.
+
+[call [cmd ::csp::timer] [arg channelVar] [arg interval]]
+    Create a receive-only channel with scheduled message in [arg interval] milliseconds. Trying to receive from the channel will cause the coroutine to wait [arg interval] milliseconds since creation. Eventually the received message is a Unix epoch time in microseconds. After receiving the message the channel is closed and destroyed.
+    [para]
+    Returns the created channel.
+
+[call [cmd ::csp::ticker] [arg channelVar] [arg interval] [arg [opt closeafter]]]
+    Create a receive-only channel with scheduled messages every [arg interval] milliseconds. 
+    [para]
+    Returns the created channel.
+
+The optional [arg closeafter] argument determines when the channel is closed. It may take one of the 2 forms:
+    [list_begin itemized]
+        [item] [arg integerNumber] that specifies the number of milliseconds after which the channel will be closed
+        [item] [arg #integerNumber] that specifies number of messages after which the channel will be closed
+    [list_end]
+    If [arg closeafter] argument is not provided, the [cmd ticker] channel emits messages endlessly.
+
+[call [cmd ::csp::->] [arg channelVar]]
+    Creates a channel and returns a new coroutine that may be called with a single argument. The coroutine is meant for integration with callback-driven code and to be used in place of one-time callback. The channel is placed in [arg channelVar] and will be destroyed after receiving a single message. The single argument passed to the callback will be available to receive from the created channel.
+    [para]
+Note that there is a limitation in replacing callbacks with -> command: only a single- or zero- argument callbacks can be replaced. In case of zero-argument callbacks an empty string is sent to the channel.
+
+[call [cmd ::csp::->>] [arg channelVar] [opt [arg size]]]
+    Creates a buffered channel of size [arg size] and returns a new coroutine that may be used in place of a callback. The coroutine may be called many times and the callback arguments are internally sent to the created channel. 
+    [para]
+Note that there is a limitation in replacing callbacks with -> command: only a single- or zero- argument callbacks can be replaced. In case of zero-argument callbacks an empty string is sent to the channel.
+
+[call [cmd ::csp::forward] [arg fromChannel] [arg toChannel]]
+    Receive messages from [arg fromChannel] and send them to [arg toChannel].
+
+[para]
+
+[list_end]
+
+[section EXAMPLES]
+[subsection {Example 1}]
+Simple message passing over an unbuffered channel
+[example {
+    package require csp
+    namespace import csp::*
+ 
+    proc sender1 {ch} {
+        foreach i {1 2 3 4} {
+            puts "Sending $i"
+            $ch <- $i
+        }
+        puts "Closing channel"
+        $ch close
+    }
+ 
+    proc receiver1 {ch} {
+        while 1 {
+            puts "Receiving [<- $ch]"
+        }
+    }
+ 
+    # create unbuffered (rendez-vous) channel
+    channel ch
+    go sender1 $ch
+    go receiver1 $ch
+ 
+    vwait forever
+}]
+
+Output:
+
+[example {
+Sending 1
+Receiving 1
+Sending 2
+Receiving 2
+Sending 3
+Receiving 3
+Sending 4
+Receiving 4
+Closing channel
+}]
+
+The communication between the coroutines is coordinated because the channel is unbuffered.
+The sender waits for the receiver.
+
+
+[subsection {Example 2}]
+Simple message passing over a buffered channel
+
+[example {
+    package require csp
+    namespace import csp::*
+ 
+    proc sender1 {ch} {
+        foreach i {1 2 3 4} {
+            puts "Sending $i"
+            $ch <- $i
+        }
+        puts "Closing channel"
+        $ch close
+    }
+ 
+    proc receiver1 {ch} {
+        while 1 {
+            puts "Receiving [<- $ch]"
+        }
+    }
+ 
+    # create buffered channel of size 2
+    channel ch 2
+    go sender1 $ch
+    go receiver1 $ch
+ 
+    vwait forever
+}]
+
+Output:
+
+[example {
+Sending 1
+Sending 2
+Sending 3
+Receiving 1
+Receiving 2
+Sending 4
+Closing channel
+Receiving 3
+Receiving 4
+Error: Cannot receive from a drained (empty and closed) channel ::csp::Channel#1
+}]
+[para]
+Since the channel is buffered of size 2, the sender waits only on the third attempt.
+[para]
+Note that the channel was closed but we still receive messages. Only after the channel was emptied, trying to receive from the channel throws an error.
+
+
+
+
+[subsection {Example 3}]
+[para]
+Using [cmd range] for receiving from the channel until closed.
+[para]
+We can prevent throwing the error in the previous example by using the [cmd range] command instead of iterating blindly with [cmd while].
+Also if the channel is buffered we can send all messages first and iterate to receive using [cmd range] in a single coroutine.
+
+[example {
+    package require csp
+    namespace import csp::*
+ 
+    proc senderreceiver {ch} {
+        foreach i {1 2 3 4} {
+            puts "Sending $i"
+            $ch <- $i
+        }
+        puts "Closing channel"
+        $ch close
+        range msg $ch {
+            puts "Message $msg"
+        }
+        puts "Received all"
+    }
+ 
+    channel ch 10
+    go senderreceiver $ch
+ 
+    vwait forever
+}]
+
+Output:
+
+[example {
+Sending 1
+Sending 2
+Sending 3
+Sending 4
+Closing channel
+Message 1
+Message 2
+Message 3
+Message 4
+Received all
+}]
+
+
+
+
+
+[subsection {Example 4}]
+[para]
+Channels can be used to coordinate future events. We use [cmd after] to create coroutine that will send to the channel. 
+[para]
+Instead of using direct callback which cannot keep local state we consume events in [cmd adder] which can keep sum in local variable.
+[para]
+[example {
+    package require csp
+    namespace import csp::*
+ 
+    proc adder {ch} {
+        set sum 0
+        while 1 {
+            set number [<- $ch]
+            incr sum $number
+            puts "adder received $number. The sum is $sum"
+        }
+    }
+ 
+    proc trigger {ch number} {
+        $ch <- $number
+    }
+ 
+    channel ch
+    go adder $ch
+    after 1000 go trigger $ch 1
+    after 3000 go trigger $ch 3
+    after 5000 go trigger $ch 5
+    puts "Enter event loop"
+ 
+    vwait forever
+}]
+
+Output:
+
+[example {
+Enter event loop
+adder received 1. The sum is 1
+adder received 3. The sum is 4
+adder received 5. The sum is 9
+}]
+
+
+
+
+
+[subsection {Example 5}]
+[para]
+Use [cmd timer] to create a channel supplying scheduled messages in the future.
+[para]
+[example {
+    package require csp
+    namespace import csp::*
+ 
+    proc future {ch} {
+        try {
+            puts "future happened at  [<- $ch]"
+            puts "try to receive again:"
+            puts "[<- $ch]"
+        } on error {out err} {
+            puts "error: $out"
+        }
+    }
+ 
+    timer ch 2000
+    go future $ch
+    puts "Enter event loop at [clock microseconds]"
+ 
+    vwait forever
+}]
+
+Output:
+
+[example {
+Enter event loop at 1434472163190638
+future happened at  1434472165189759
+try to receive again:
+error: Cannot receive from a drained (empty and closed) channel ::csp::Channel#1
+}]
+[para]
+
+Instead of scheduling events with [cmd after] we can use [cmd timer] to create a special receive only channel. There will be only one message send to this channel after the specified time so we can pass this channel to another coroutine that will wait for that message. The message from the timer channel represents unix epoch time in microseconds. The timer channel will be automatically destroyed after first receive so trying to receive again will throw an error.
+
+
+
+
+
+[subsection {Example 6}]
+[para]
+Using [cmd ticker] we can create receive only channel from which we can consume timestamp messages at regular intervals.
+
+[example {
+    package require csp
+    namespace import csp::*
+ 
+    proc future {ch} {
+        set count 0
+        while 1 {
+            incr count
+            puts "future $count received at [<- $ch]"
+        }
+    }
+ 
+    ticker ch 1000
+    go future $ch
+    puts "Enter event loop at  [clock microseconds]"
+  
+    vwait forever
+}]
+
+Output:
+
+[example {
+Enter event loop at  1434472822879684
+future 1 received at 1434472823879110
+future 2 received at 1434472824882163
+future 3 received at 1434472825884246
+...
+}]
+
+
+
+
+[subsection {Example 7}]
+[para]
+
+[cmd ticker] command returns the created channel so we can use it in place in combination with [cmd range] to further simplify the example
+
+[example {
+    package require csp
+    namespace import csp::*
+ 
+    proc counter {} {
+        range t [ticker ch 1000] {
+            puts "received $t"
+        }
+    }
+ 
+    go counter
+ 
+    vwait forever
+}]
+
+Output:
+
+[example {
+received 1434474325947677
+received 1434474326950822
+received 1434474327952904
+...
+}]
+
+
+
+
+
+[subsection {Example 8}]
+[para]
+
+Another example of using [cmd ticker] to implement the canonical countdown counter from [uri http://wiki.tcl.tk/946 {Tcl wiki}].
+
+[example {
+    package require Tk
+    package require csp
+    namespace import csp::*
+ 
+    proc countdown {varName} {
+        upvar $varName var
+        range _ [ticker t 1000 #10] {
+            incr var -1
+        }
+    }
+ 
+    set count 10
+    label .counter -font {Helvetica 72} -width 3 -textvariable count
+    grid .counter -padx 100 -pady 100
+    go countdown count
+}]
+
+
+
+
+
+
+[subsection {Example 9}]
+[para]
+Closing the channel by another scheduled event breaks the [cmd range] loop
+
+[example {
+    package require csp
+    namespace import csp::*
+ 
+    proc counter {ch} {
+        range t $ch {
+            puts "received $t"
+        }
+        puts "counter exit"
+    }
+ 
+    ticker ch 1000
+    go counter $ch
+    after 4500 $ch close
+    puts "Enter event loop at [clock microseconds]"
+ 
+    vwait forever
+}]
+
+Output:
+
+[example {
+Enter event loop at 1434474384645704
+received 1434474385644900
+received 1434474386648105
+received 1434474387650088
+received 1434474388652345
+counter exit
+}]
+
+
+
+[subsection {Example 10}]
+[para]
+Redirect callback call argument to a channel using [cmd ->] command.
+
+[example {
+    package require http
+    package require csp
+    namespace import csp::*
+ 
+    proc main {} {
+        http::geturl http://securitykiss.com/rest/now -command [-> ch]
+        puts "fetched: [http::data [<- $ch]]"
+    }
+ 
+    go main
+ 
+    vwait forever
+}]
+
+Output:
+
+[example {
+fetched: 1434474568
+}]
+
+[para]
+[package csp] package makes it easy to integrate channels and coroutines with existing event driven code.
+Using the [cmd ->] utility command we can make channels work with callback driven commands and at the same time avoid callback hell.
+[para]
+[cmd ->] [arg ch] creates a channel ch and returns a new coroutine that may be used in place of a callback.
+The channel will be destroyed after receiving a single value.
+The single argument passed to the callback will be available to receive from the created channel.
+[para]
+Such code organization promotes local reasoning - it helps writing linear code with local state kept in proc variables. Otherwise the callback would require keeping state in global variables.
+[para]
+Note that there is a limitation in replacing callbacks with [cmd ->] command: only a single- or zero- argument callbacks can be replaced.
+In case of zero-argument callbacks an empty string is sent to the channel.
+[para]
+Note that there is no symmetry in <- <-! -> ->> commands. Every one of them has a different purpose.
+
+
+[subsection {Example 11}]
+[para]
+Use [cmd select] command to choose ready channels.
+
+[example {
+    package require http
+    package require csp
+    namespace import csp::*
+ 
+    proc main {} {
+        http::geturl http://securitykiss.com/rest/slow/now -command [-> ch1]
+        http::geturl http://securitykiss.com/rest/slow/now -command [-> ch2]
+        select {
+            <- $ch1 {
+                puts "from first request: [http::data [<- $ch1]]"
+            }
+            <- $ch2 {
+                puts "from second request: [http::data [<- $ch2]]"
+            }
+        }
+    }
+ 
+    go main
+ 
+    vwait forever
+}]
+
+Output:
+
+[example {
+from first request: 1434483100
+}]
+
+[para]
+Previous example with callback channels does not extend to making parallel http requests because one waiting channel would prevent receiving from the other.
+The [cmd select] command chooses which of a set of possible send or receive operations will proceed. In this example [cmd select] command examines two callback channels and depending on which one is ready for receive first, it evaluates corresponding body block.
+
+
+[subsection {Example 12}]
+[para]
+Combine [cmd timer] created channel with [cmd select] to enforce timeouts.
+[example {
+    package require http
+    package require csp
+    namespace import csp::*
+ 
+    proc main {} {
+        http::geturl http://securitykiss.com/rest/slow/now -command [-> ch1]
+        http::geturl http://securitykiss.com/rest/slow/now -command [-> ch2]
+        timer t1 400
+        select {
+            <- $ch1 {
+                puts "from first request: [http::data [<- $ch1]]"
+            }
+            <- $ch2 {
+                puts "from second request: [http::data [<- $ch2]]"
+            }
+            <- $t1 {
+                puts "requests timed out at [<- $t1]"
+            }
+        }
+    }
+ 
+    go main
+ 
+    vwait forever
+}]
+
+Output:
+
+[example {
+requests timed out at 1434484003634953
+}]
+[para]
+Since [cmd select] chooses from the set of channels whichever is ready first, by adding the [cmd timer] created channel to select from, we can implement timeout as in the example above.
+
+
+
+[subsection {Example 13}]
+[para]
+Use [cmd select] with the default clause.
+
+[example {
+    package require http
+    package require csp
+    namespace import csp::*
+ 
+    proc DisplayResult {ch1 ch2} {
+        set result [select {
+            <- $ch1 {
+                http::data [<- $ch1]
+            }
+            <- $ch2 {
+                http::data [<- $ch2]
+            }
+            default {
+                subst "no response was ready"
+            }
+        }]
+        puts "DisplayResult: $result"
+    }
+ 
+    proc main {} {
+        http::geturl http://securitykiss.com/rest/slow/now -command [-> ch1]
+        http::geturl http://securitykiss.com/rest/slow/now -command [-> ch2]
+        after 400 go DisplayResult $ch1 $ch2
+    }
+ 
+    go main
+ 
+    vwait forever
+}]
+
+Output:
+
+[example {
+DisplayResult: no response was ready
+}]
+
+[para]
+[cmd select] command is potentially waiting if no channel is ready. Sometimes we need to proceed no matter what so [cmd select] makes it possible to return without waiting if the [cmd default] clause is provided. This example also shows that [cmd select] has a return value. In this case the result returned by [cmd select] is either HTTP response or the value specified in the default block if no channel is ready.
+
+
+
+
+
+[subsection {Example 14}]
+[para]
+Funnel multiple channels into a single channel using [cmd forward] command.
+
+[example {
+    package require http
+    package require csp
+    namespace import csp::*
+ 
+    proc main {} {
+        set urls {
+            http://securitykiss.com
+            http://meetup.com
+            http://reddit.com
+            http://google.com
+            http://twitter.com
+            http://bitcoin.org
+        }
+        channel f
+        foreach url $urls {
+            http::geturl $url -method HEAD -command [-> ch]
+            forward $ch $f
+        }
+        after 200 $f close
+        range token $f {
+            upvar #0 $token state
+            puts "$state(http)\t$state(url)"
+        }
+        puts "main exit"
+    }
+ 
+    go main
+ 
+    vwait forever
+}]
+
+Output:
+
+[example {
+HTTP/1.1 302 Found  http://google.com/
+HTTP/1.1 301 Moved Permanently  http://reddit.com/
+HTTP/1.1 301 Moved Permanently  http://securitykiss.com/
+main exit
+}]
+
+[para]
+When we want to listen on many channels, especially when they are dynamically created for example per URL as in the above example, [cmd select] command becomes awkward because it requires specifying logic for every channel.
+[para]
+In the example above we spawn a HTTP request for every URL and forward messages from individual "callback channels" into the single "funnel channel" [arg f]. In this way the responses are available in a single channel so we can apply common logic to the results. We also set the timeout for the requests by closing the "funnel channel" after some time. Responses that don't make it within a specified timeout are ignored.
+
+
+
+[subsection {Example 15}]
+[para]
+Redirect callback multi call argument to a long-lived channel using [cmd ->>] command.
+
+[example {
+    package require Tk
+    package require csp
+    namespace import csp::*
+ 
+    proc main {} {
+        set number 5
+        frame .f
+        button .f.left -text <<< -command [->> chleft]
+        label .f.lbl -font {Helvetica 24} -text $number
+        button .f.right -text >>> -command [->> chright]
+        grid .f.left .f.lbl .f.right
+        grid .f
+        while 1 {
+            select {
+                <- $chleft {
+                    <- $chleft
+                    incr number -1
+                }
+                <- $chright {
+                    <- $chright
+                    incr number
+                }
+            }
+            .f.lbl configure -text $number
+        }
+    }
+ 
+    go main
+}]
+
+[para]
+In previous examples the [cmd ->] command created short-lived disposable callback channels that could be received from only once.
+Often an existing command require a callback that will be called many times over long period of time. In such case [cmd ->>] comes to play. 
+It returns a coroutine that may be called many times in place of the callback. Callback argument is passed to the newly created buffered channel that can be later received from to consume the messages (callback arguments).
+[para]
+In this example similar functionality could be achieved in a simpler way using [arg -textvariable] on [cmd label] but it would require a global variable instead of local [arg number].
+[para]
+The same limitations regarding callback arguments arity apply as for the [cmd ->] command.
+[para]
+Note that there is no symmetry in <- <-! -> ->> commands. Every one of them has a different purpose.
+
+
+
+
+[subsection {Example 16}]
+[para]
+Channel operations like [cmd <-] and [cmd range] can be used only in coroutines. Using coroutines for channel driven coordination is the recommended way of using [package csp] package. 
+[para]
+It may happen that we need to use channels outside of coroutines. It is possible with corresponding [cmd <-!] and [cmd range!] commands but there are caveats.
+The "bang" terminated commands are implemented using vwait nested calls and have many limitations. Thus they should be used with extra care and only in simple scenarios. Especially it is not guaranteed that they will work correctly if used inside callbacks.
+[para]
+In this example we show a simple scenario where receiving from the channel in the main script control flow makes sense as a way to synchronize coroutine termination.
+
+[example {
+    package require http
+    package require csp
+    namespace import csp::*
+  
+    proc worker {ch_quit} {
+        http::geturl http://securitykiss.com/rest/now -command [-> ch]
+        puts "fetched: [http::data [<- $ch]]"
+        $ch_quit <- 1
+    }
+  
+    # termination coordination channel
+    channel ch_quit
+  
+    go worker $ch_quit
+ 
+    <-! $ch_quit
+}]
+
+Output:
+
+[example {
+fetched: 1434556219
+}]
+
+Without the last line the script would exit immediately without giving the coroutine a chance to fetch the url.
+
+
+
+[subsection {Example 17}]
+[para]
+Following the "bang" terminated command trail, this example shows how [cmd range!] command may further simplify the previous countdown counter example.
+
+[example {
+    package require Tk
+    package require csp
+    namespace import csp::*
+ 
+    set count 5
+    label .counter -font {Helvetica 72} -width 3 -textvariable count
+    grid .counter -padx 100 -pady 100
+    range! _ [ticker t 1000 #$count] {
+        incr count -1
+    }
+}]
+
+
+
+[subsection {Example 18}]
+[para]
+A more complex example using the already discussed constructs.
+
+[example {
+    # A simple web crawler/scraper demonstrating the csp style programming in Tcl
+    # In this example we have 2 coroutines: a crawler and a parser communicating over 2 channels.
+    # The crawler receives the url to process from the urls channel and spawns a http request
+    # Immediately sends the pair: (url, callback channel from http request) 
+    # into a pending requests channel for further processing by the parser.
+    # The parser receives the http token from the received callback channel 
+    # and fetches the page content from the url in order to extract more urls.
+    # The new urls are sent to the urls channel where the crawler takes over again.
+  
+    package require http
+    package require csp
+    namespace import csp::*
+ 
+    # The crawler coroutine is initialized with 3 channels:
+    # urls - channel with urls waiting to process
+    # requests - channel with pending http requests
+    # quit - synchronization channel to communicate end of coroutine
+    proc crawler {urls requests quit} {
+        # list of visited urls
+        set visited {}
+        range url $urls {
+            if {$url ni $visited} {
+                http::geturl $url -command [-> req]
+                lappend visited $url
+                # note we are passing channel object over a channel
+                $requests <- [list $url $req]
+            }
+        }
+        $quit <- 1
+    }
+ 
+ 
+    # The parser coroutine is initialized with 3 channels:
+    # urls - channel with urls waiting to process
+    # requests - channel with pending http requests
+    # quit - synchronization channel to communicate end of coroutine
+    proc parser {urls requests quit} {
+        set count 0
+        range msg $requests {
+            lassign $msg url req
+            timer timeout 5000
+            select {
+                <- $req {
+                    set token [<- $req]
+                    set data [http::data $token]
+                    puts "Fetched URL $url with content size [string length $data] bytes"
+                    foreach {_ href} [regexp -nocase -all -inline {href="(.*?)"} $data] {
+                        if {![string match http:* $href] && ![string match mailto:* $href]} {
+                            # catch error if channel has been closed
+                            $urls <- [create_url $url $href]
+                        }
+                    }
+                }
+                <- $timeout {
+                    <- $timeout
+                    puts "Request to $url timed out"
+                }
+            }
+            # we stop after fetching 10 urls
+            if {[incr count] >= 10} {
+                $urls close
+                $requests close
+            }
+        }
+        $quit <- 1
+    }
+ 
+    # utility function to construct urls
+    proc create_url {current href} {
+        regexp {(http://[^/]*)(.*)} $current _ base path
+        if {[string match /* $href]} {
+            return $base$href
+        } else {
+            return $current$href
+        }
+    }
+ 
+ 
+    # channel containing urls to process
+    # this channel must have rather large buffer so that the urls to crawl can queue
+    channel urls 10000
+    # channel containing (url req) pairs representing pending http requests
+    # size of this channel determines parallelism i.e. the maximum number of pending requests at the same time
+    channel requests 3
+    # coordination channels that make the main program wait until coroutines end
+    channel crawler_quit
+    channel parser_quit
+    go crawler $urls $requests $crawler_quit
+    go parser $urls $requests $parser_quit
+ 
+    # send the seed url to initiate crawling
+    $urls <-! "http://www.tcl.tk/man/tcl8.6/"
+ 
+    # Gracefully exit - wait for coroutines to complete
+    <-! $crawler_quit
+    <-! $parser_quit
+}]
+
+In particular it is worth noting:
+[list_begin itemized]
+[item] it is possible to pass a channel object over another channel
+[item] use of [arg quit] synchronization channel to communicate end of coroutine
+[item] closing channels as a way to terminate [cmd range] iteration
+[list_end]
+
+
+[manpage_end]

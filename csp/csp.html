@@ -1,0 +1,980 @@
+
+<html><head>
+<title>csp - Concurrency</title>
+<style type="text/css"><!--
+    HTML {
+	background: 	#FFFFFF;
+	color: 		black;
+    }
+    BODY {
+	background: 	#FFFFFF;
+	color:	 	black;
+    }
+    DIV.doctools {
+	margin-left:	10%;
+	margin-right:	10%;
+    }
+    DIV.doctools H1,DIV.doctools H2 {
+	margin-left:	-5%;
+    }
+    H1, H2, H3, H4 {
+	margin-top: 	1em;
+	font-family:	sans-serif;
+	font-size:	large;
+	color:		#005A9C;
+	background: 	transparent;
+	text-align:		left;
+    }
+    H1.title {
+	text-align: center;
+    }
+    UL,OL {
+	margin-right: 0em;
+	margin-top: 3pt;
+	margin-bottom: 3pt;
+    }
+    UL LI {
+	list-style: disc;
+    }
+    OL LI {
+	list-style: decimal;
+    }
+    DT {
+	padding-top: 	1ex;
+    }
+    UL.toc,UL.toc UL, UL.toc UL UL {
+	font:		normal 12pt/14pt sans-serif;
+	list-style:	none;
+    }
+    LI.section, LI.subsection {
+	list-style: 	none;
+	margin-left: 	0em;
+	text-indent:	0em;
+	padding: 	0em;
+    }
+    PRE {
+	display: 	block;
+	font-family:	monospace;
+	white-space:	pre;
+	margin:		0%;
+	padding-top:	0.5ex;
+	padding-bottom:	0.5ex;
+	padding-left:	1ex;
+	padding-right:	1ex;
+	width:		100%;
+    }
+    PRE.example {
+	color: 		black;
+	background: 	#f5dcb3;
+	border:		1px solid black;
+    }
+    UL.requirements LI, UL.syntax LI {
+	list-style: 	none;
+	margin-left: 	0em;
+	text-indent:	0em;
+	padding:	0em;
+    }
+    DIV.synopsis {
+	color: 		black;
+	background: 	#80ffff;
+	border:		1px solid black;
+	font-family:	serif;
+	margin-top: 	1em;
+	margin-bottom: 	1em;
+    }
+    UL.syntax {
+	margin-top: 	1em;
+	border-top:	1px solid black;
+    }
+    UL.requirements {
+	margin-bottom: 	1em;
+	border-bottom:	1px solid black;
+    }
+--></style>
+</head>
+<! -- Generated from file '' by tcllib/doctools with format 'html'
+   -->
+<! -- Copyright &copy; 2015 SecurityKISS Ltd &lt;open.source@securitykiss.com&gt; - MIT License - Feedback and bug reports are welcome
+   -->
+<! -- CVS: $Id$ csp.n
+   -->
+<body><div class="doctools">
+<h1 class="title">csp(n) 0.1.0  &quot;Concurrency&quot;</h1>
+<div id="name" class="section"><h2><a name="name">Name</a></h2>
+<p>csp - Golang style concurrency library based on Communicating Sequential Processes</p>
+</div>
+<div id="toc" class="section"><h2><a name="toc">Table Of Contents</a></h2>
+<ul class="toc">
+<li class="section"><a href="#toc">Table Of Contents</a></li>
+<li class="section"><a href="#synopsis">Synopsis</a></li>
+<li class="section"><a href="#section1">Description</a></li>
+<li class="section"><a href="#section2">Concepts</a></li>
+<li class="section"><a href="#section3">COMMANDS</a></li>
+<li class="section"><a href="#section4">EXAMPLES</a>
+<ul>
+<li class="subsection"><a href="#subsection1">Example 1</a></li>
+<li class="subsection"><a href="#subsection2">Example 2</a></li>
+<li class="subsection"><a href="#subsection3">Example 3</a></li>
+<li class="subsection"><a href="#subsection4">Example 4</a></li>
+<li class="subsection"><a href="#subsection5">Example 5</a></li>
+<li class="subsection"><a href="#subsection6">Example 6</a></li>
+<li class="subsection"><a href="#subsection7">Example 7</a></li>
+<li class="subsection"><a href="#subsection8">Example 8</a></li>
+<li class="subsection"><a href="#subsection9">Example 9</a></li>
+<li class="subsection"><a href="#subsection10">Example 10</a></li>
+<li class="subsection"><a href="#subsection11">Example 11</a></li>
+<li class="subsection"><a href="#subsection12">Example 12</a></li>
+<li class="subsection"><a href="#subsection13">Example 13</a></li>
+<li class="subsection"><a href="#subsection14">Example 14</a></li>
+<li class="subsection"><a href="#subsection15">Example 15</a></li>
+<li class="subsection"><a href="#subsection16">Example 16</a></li>
+<li class="subsection"><a href="#subsection17">Example 17</a></li>
+<li class="subsection"><a href="#subsection18">Example 18</a></li>
+</ul>
+</li>
+<li class="section"><a href="#keywords">Keywords</a></li>
+<li class="section"><a href="#category">Category</a></li>
+<li class="section"><a href="#copyright">Copyright</a></li>
+</ul>
+</div>
+<div id="synopsis" class="section"><h2><a name="synopsis">Synopsis</a></h2>
+<div class="synopsis">
+<ul class="requirements">
+<li>package require <b class="pkgname">Tcl 8.6</b></li>
+<li>package require <b class="pkgname">csp <span class="opt">?0.1.0?</span></b></li>
+</ul>
+<ul class="syntax">
+<li><a href="#1"><b class="cmd">::csp::go</b> <i class="arg">procName</i> <span class="opt">?<i class="arg">args</i>?</span></a></li>
+<li><a href="#2"><b class="cmd">::csp::channel</b> <i class="arg">channelVar</i> <span class="opt">?<i class="arg">size</i>?</span></a></li>
+<li><a href="#3"><b class="cmd">channelObj</b> <i class="arg">close</i></a></li>
+<li><a href="#4"><b class="cmd">channelObj</b> <i class="arg">&lt;-</i> <i class="arg">msg</i></a></li>
+<li><a href="#5"><b class="cmd">channelObj</b> <i class="arg">&lt;-!</i> <i class="arg">msg</i></a></li>
+<li><a href="#6"><b class="cmd">::csp::&lt;-</b> <i class="arg">channelObj</i></a></li>
+<li><a href="#7"><b class="cmd">::csp::&lt;-!</b> <i class="arg">channelObj</i></a></li>
+<li><a href="#8"><b class="cmd">::csp::select</b> <i class="arg">operation</i> <i class="arg">body</i></a></li>
+<li><a href="#9"><b class="cmd">::csp::range</b> <i class="arg">varName</i> <i class="arg">channelObj</i> <i class="arg">body</i></a></li>
+<li><a href="#10"><b class="cmd">::csp::range!</b> <i class="arg">varName</i> <i class="arg">channelObj</i> <i class="arg">body</i></a></li>
+<li><a href="#11"><b class="cmd">::csp::timer</b> <i class="arg">channelVar</i> <i class="arg">interval</i></a></li>
+<li><a href="#12"><b class="cmd">::csp::ticker</b> <i class="arg">channelVar</i> <i class="arg">interval</i> <i class="arg"><span class="opt">?closeafter?</span></i></a></li>
+<li><a href="#13"><b class="cmd">::csp::-&gt;</b> <i class="arg">channelVar</i></a></li>
+<li><a href="#14"><b class="cmd">::csp::-&gt;&gt;</b> <i class="arg">channelVar</i> <span class="opt">?<i class="arg">size</i>?</span></a></li>
+<li><a href="#15"><b class="cmd">::csp::forward</b> <i class="arg">fromChannel</i> <i class="arg">toChannel</i></a></li>
+</ul>
+</div>
+</div>
+<div id="section1" class="section"><h2><a name="section1">Description</a></h2>
+<p>The <b class="package">csp</b> package provides two concurrency primitives namely <i class="term">coroutines</i> and <i class="term">channels</i> which allow concurrent programming in the style of <a href="https://en.wikipedia.org/wiki/Go_(programming_language)">Golang</a>.</p>
+<p>The concepts originate in Hoare's <a href="https://en.wikipedia.org/wiki/Communicating_sequential_processes">Communicating Sequential Processes</a> while the syntax mimics the Golang implementation.</p>
+<p>The CSP concurrency model may be visualized as a set of independent processes (coroutines) sending and receiving messages to the named channels. The control flow in the coroutines is coordinated at the points of sending and receiving messages i.e. the coroutine may need to wait while trying to send or receive.
+Since it must work in a single-threaded interpreter, waiting is non-blocking. Instead of blocking a waiting coroutine gives way to other coroutines.</p>
+<p>This concurrency model may also be seen as a generalization of Unix <a href="https://en.wikipedia.org/wiki/Named_pipe">named pipes</a> where processes and pipes correspond to coroutines and channels.</p>
+</div>
+<div id="section2" class="section"><h2><a name="section2">Concepts</a></h2>
+<dl class="definitions">
+<dt><b class="cmd">channel</b></dt>
+<dd><dl class="definitions">
+    
+<dt>There are two types of channels.</dt>
+<dd><dl class="definitions">
+            
+            
+<dt><i class="term">Unbuffered channels</i></dt>
+<dd><p>The unbuffered channel is a single value container that can be imagined as a rendez-vous venue where the sender must wait for the receiver to collect the message.
+            By default channels are unbuffered.</p></dd>
+<dt><i class="term">Buffered channels</i></dt>
+<dd><p>The buffered channel behaves like a FIFO queue.</p></dd>
+</dl></dd>
+</dl>
+<dl class="definitions">
+    
+<dt>Whether receiver need to wait while trying to receive from a channel depends on the channel's internal state:</dt>
+<dd><dl class="definitions">
+        
+<dt><i class="term">ready for receive</i></dt>
+<dd><p>The buffered channel is ready for receive when it is not empty.
+            The unbuffered channel is ready for receive if there exists a sender waiting with a message on this channel.</p></dd>
+<dt><i class="term">ready for send</i></dt>
+<dd><p>The buffered channel is ready for send when it is not full.
+            The unbuffered channel is ready for send if there is no other sender already waiting on this channel. Note that</p></dd>
+</dl></dd>
+</dl>
+<p>Channel is created with:</p>
+<p><b class="cmd">::csp::channel</b> <i class="arg">chanVar</i> <i class="arg"><span class="opt">?size?</span></i></p>
+<p>If the size is zero (default) the created channel is unbuffered.</p>
+<p>Channel may be closed with:</p>
+<p><b class="cmd">channelObj</b> <i class="arg">close</i></p>
+<p>and is destroyed automatically when all messages are received (the channel is drained).</p>
+<dl class="definitions">
+    
+<dt>Channel lifecycle is described by 3 possible states:</dt>
+<dd><dl class="definitions">
+            
+<dt><i class="term">created</i></dt>
+<dd><p>Once the channel is created you can send to and receive from the channel.</p></dd>
+<dt><i class="term">closed</i></dt>
+<dd><p>When the channel is closed you can still receive from the channel but you cannot send to it.
+            Trying to send to the closed channel throws an error.
+            It is responsibility of the library user to close the unused channels.</p></dd>
+<dt><i class="term">destroyed</i></dt>
+<dd><p>The channel does not exist. 
+            After receiving all messages from the closed channel, the channel is destroyed.
+            Trying to send to or receive from the destroyed channel throws an error.</p></dd>
+</dl></dd>
+</dl>
+<p>Note that creating a large number of channels that are properly closed but not emptied may result in a memory leak.</p></dd>
+<dt><b class="cmd">coroutine</b></dt>
+<dd><p><i class="term">Coroutine</i> is a procedure executing concurrently with other coroutines. 
+    <i class="term">Coroutine</i> may send messages to and receive messages from <i class="term">channels</i>. Any coroutine may act as a sender or receiver at different times. If <i class="term">channel</i> is not ready a coroutine waits by giving way to other coroutines. This makes the coroutine execution multiplexed at the points of sending to or receiving from channels.</p>
+<p><i class="term">Coroutine</i> is created with:</p>
+<p><b class="cmd">::csp::go</b> <i class="arg">procName</i> <i class="arg"><span class="opt">?args?</span></i></p>
+<p>where <i class="arg">procName</i> is the name of the existing Tcl procedure that will be run as a coroutine.
+    You can create many coroutines from a single Tcl procedure, possibly called with different arguments.</p>
+<p>Coroutine is destroyed when its execution ends.</p>
+<p>We reuse the term <i class="term">coroutine</i> known from Tcl (modelled on Lua) coroutines, but they are are not equivalent. <b class="package">csp</b> coroutines are implemented in terms of Tcl coroutines and it's better not to mix <b class="package">csp</b> and Tcl coroutines in a single program.</p></dd>
+</dl>
+</div>
+<div id="section3" class="section"><h2><a name="section3">COMMANDS</a></h2>
+<dl class="definitions">
+<dt><a name="1"><b class="cmd">::csp::go</b> <i class="arg">procName</i> <span class="opt">?<i class="arg">args</i>?</span></a></dt>
+<dd><p>Create a coroutine by calling <i class="arg">procName</i> with arguments <i class="arg">args</i>. Returns internal name of the coroutine.</p></dd>
+<dt><a name="2"><b class="cmd">::csp::channel</b> <i class="arg">channelVar</i> <span class="opt">?<i class="arg">size</i>?</span></a></dt>
+<dd><p>Create a channel object that will be further referred as <b class="cmd">channelObj</b>. The name of the object is contained in variable <i class="arg">channelVar</i>.</p>
+<dl class="arguments">
+        
+<dt>var <i class="arg">channelVar</i></dt>
+<dd><p>Variable channelVar that will be created and will contiain the channel object name.</p></dd>
+<dt>number <i class="arg">size</i></dt>
+<dd><p>Size of the channel buffer. If size is zero (default) the channel is unbuffered.</p></dd>
+</dl>
+<p>Returns channel object name.</p></dd>
+<dt><a name="3"><b class="cmd">channelObj</b> <i class="arg">close</i></a></dt>
+<dd><p>Close the channel <i class="arg">channelObj</i>. Returns empty string.</p></dd>
+<dt><a name="4"><b class="cmd">channelObj</b> <i class="arg">&lt;-</i> <i class="arg">msg</i></a></dt>
+<dd><p>Send <i class="arg">msg</i> to channel <i class="arg">channelObj</i> in a coroutine. Returns empty string.</p></dd>
+<dt><a name="5"><b class="cmd">channelObj</b> <i class="arg">&lt;-!</i> <i class="arg">msg</i></a></dt>
+<dd><p>Send <i class="arg">msg</i> to channel <i class="arg">channelObj</i> in a script (in the Tcl program main control flow). It is implemented using vwait and has many limitations. Use with care and only in simple scenarios. Returns empty string.</p></dd>
+<dt><a name="6"><b class="cmd">::csp::&lt;-</b> <i class="arg">channelObj</i></a></dt>
+<dd><p>Receive from channel <i class="arg">channelObj</i> in a coroutine. Returns the message received from the channel.</p></dd>
+<dt><a name="7"><b class="cmd">::csp::&lt;-!</b> <i class="arg">channelObj</i></a></dt>
+<dd><p>Receive from channel <i class="arg">channelObj</i> in a script (in the Tcl program main control flow). Returns the message received from the channel.</p></dd>
+<dt><a name="8"><b class="cmd">::csp::select</b> <i class="arg">operation</i> <i class="arg">body</i></a></dt>
+<dd><p>Evaluate set of channels to find which channels are ready and run corresponding block of code. Returns the result of evaluation of the block of code.</p>
+<dl class="arguments">
+        
+<dt>list <i class="arg">operation</i></dt>
+<dd><p>Operation takes one of 3 forms:</p>
+<p><b class="cmd">&lt;-</b> <i class="arg">channelObj</i></p>
+<p>for evaluating whether the <i class="arg">channelObj</i> is ready for receive, or</p>
+<p><i class="arg">channelObj</i> <b class="cmd">&lt;-</b></p>
+<p>for evaluating whether the <i class="arg">channelObj</i> is ready for send, or</p>
+<p>default</p>
+<p>for evaluating default case if no channel is ready.</p></dd>
+<dt>block <i class="arg">body</i></dt>
+<dd><p>Block of code to be evaluated.</p></dd>
+</dl>
+<p>The select command provides a way to handle multiple channels. It is a switch like statement where channels are evaluated for readiness. The select command makes the coroutine wait until at least one channel is ready. If multiple channels can proceed, <b class="cmd">select</b> chooses pseudo-randomly. A default clause, if present, executes immediately if no channel is ready.</p></dd>
+<dt><a name="9"><b class="cmd">::csp::range</b> <i class="arg">varName</i> <i class="arg">channelObj</i> <i class="arg">body</i></a></dt>
+<dd><p>Receive from channel until closed in a coroutine.</p>
+<p>This is a <b class="cmd">foreach</b> like construct that iterates by receiving messages from channel one by one until channel is closed. If channel is not ready for receive, <b class="cmd">range</b> waits.</p></dd>
+<dt><a name="10"><b class="cmd">::csp::range!</b> <i class="arg">varName</i> <i class="arg">channelObj</i> <i class="arg">body</i></a></dt>
+<dd><p>Receive from channel until closed in the main control flow.</p>
+<p>A version of <b class="cmd">range</b> command that can be used outside of a coroutine. It is implemented using vwait and has many limitations. Use with care and only in simple scenarios.</p></dd>
+<dt><a name="11"><b class="cmd">::csp::timer</b> <i class="arg">channelVar</i> <i class="arg">interval</i></a></dt>
+<dd><p>Create a receive-only channel with scheduled message in <i class="arg">interval</i> milliseconds. Trying to receive from the channel will cause the coroutine to wait <i class="arg">interval</i> milliseconds since creation. Eventually the received message is a Unix epoch time in microseconds. After receiving the message the channel is closed and destroyed.</p>
+<p>Returns the created channel.</p></dd>
+<dt><a name="12"><b class="cmd">::csp::ticker</b> <i class="arg">channelVar</i> <i class="arg">interval</i> <i class="arg"><span class="opt">?closeafter?</span></i></a></dt>
+<dd><p>Create a receive-only channel with scheduled messages every <i class="arg">interval</i> milliseconds.</p>
+<p>Returns the created channel.
+The optional <i class="arg">closeafter</i> argument determines when the channel is closed. It may take one of the 2 forms:</p>
+<ul class="itemized">
+        
+<li><p><i class="arg">integerNumber</i> that specifies the number of milliseconds after which the channel will be closed</p></li>
+<li><p><i class="arg">#integerNumber</i> that specifies number of messages after which the channel will be closed</p></li>
+</ul>
+<p>If <i class="arg">closeafter</i> argument is not provided, the <b class="cmd">ticker</b> channel emits messages endlessly.</p></dd>
+<dt><a name="13"><b class="cmd">::csp::-&gt;</b> <i class="arg">channelVar</i></a></dt>
+<dd><p>Creates a channel and returns a new coroutine that may be called with a single argument. The coroutine is meant for integration with callback-driven code and to be used in place of one-time callback. The channel is placed in <i class="arg">channelVar</i> and will be destroyed after receiving a single message. The single argument passed to the callback will be available to receive from the created channel.</p>
+<p>Note that there is a limitation in replacing callbacks with -&gt; command: only a single- or zero- argument callbacks can be replaced. In case of zero-argument callbacks an empty string is sent to the channel.</p></dd>
+<dt><a name="14"><b class="cmd">::csp::-&gt;&gt;</b> <i class="arg">channelVar</i> <span class="opt">?<i class="arg">size</i>?</span></a></dt>
+<dd><p>Creates a buffered channel of size <i class="arg">size</i> and returns a new coroutine that may be used in place of a callback. The coroutine may be called many times and the callback arguments are internally sent to the created channel.</p>
+<p>Note that there is a limitation in replacing callbacks with -&gt; command: only a single- or zero- argument callbacks can be replaced. In case of zero-argument callbacks an empty string is sent to the channel.</p></dd>
+<dt><a name="15"><b class="cmd">::csp::forward</b> <i class="arg">fromChannel</i> <i class="arg">toChannel</i></a></dt>
+<dd><p>Receive messages from <i class="arg">fromChannel</i> and send them to <i class="arg">toChannel</i>.</p></dd>
+</dl>
+</div>
+<div id="section4" class="section"><h2><a name="section4">EXAMPLES</a></h2>
+<div id="subsection1" class="subsection"><h3><a name="subsection1">Example 1</a></h3>
+<p>Simple message passing over an unbuffered channel</p>
+<pre class="example">
+    package require csp
+    namespace import csp::*
+ 
+    proc sender1 {ch} {
+        foreach i {1 2 3 4} {
+            puts &quot;Sending $i&quot;
+            $ch &lt;- $i
+        }
+        puts &quot;Closing channel&quot;
+        $ch close
+    }
+ 
+    proc receiver1 {ch} {
+        while 1 {
+            puts &quot;Receiving [&lt;- $ch]&quot;
+        }
+    }
+ 
+    # create unbuffered (rendez-vous) channel
+    channel ch
+    go sender1 $ch
+    go receiver1 $ch
+ 
+    vwait forever
+</pre>
+<p>Output:</p>
+<pre class="example">
+Sending 1
+Receiving 1
+Sending 2
+Receiving 2
+Sending 3
+Receiving 3
+Sending 4
+Receiving 4
+Closing channel
+</pre>
+<p>The communication between the coroutines is coordinated because the channel is unbuffered.
+The sender waits for the receiver.</p>
+</div>
+<div id="subsection2" class="subsection"><h3><a name="subsection2">Example 2</a></h3>
+<p>Simple message passing over a buffered channel</p>
+<pre class="example">
+    package require csp
+    namespace import csp::*
+ 
+    proc sender1 {ch} {
+        foreach i {1 2 3 4} {
+            puts &quot;Sending $i&quot;
+            $ch &lt;- $i
+        }
+        puts &quot;Closing channel&quot;
+        $ch close
+    }
+ 
+    proc receiver1 {ch} {
+        while 1 {
+            puts &quot;Receiving [&lt;- $ch]&quot;
+        }
+    }
+ 
+    # create buffered channel of size 2
+    channel ch 2
+    go sender1 $ch
+    go receiver1 $ch
+ 
+    vwait forever
+</pre>
+<p>Output:</p>
+<pre class="example">
+Sending 1
+Sending 2
+Sending 3
+Receiving 1
+Receiving 2
+Sending 4
+Closing channel
+Receiving 3
+Receiving 4
+Error: Cannot receive from a drained (empty and closed) channel ::csp::Channel#1
+</pre>
+<p>Since the channel is buffered of size 2, the sender waits only on the third attempt.</p>
+<p>Note that the channel was closed but we still receive messages. Only after the channel was emptied, trying to receive from the channel throws an error.</p>
+</div>
+<div id="subsection3" class="subsection"><h3><a name="subsection3">Example 3</a></h3>
+<p>Using <b class="cmd">range</b> for receiving from the channel until closed.</p>
+<p>We can prevent throwing the error in the previous example by using the <b class="cmd">range</b> command instead of iterating blindly with <b class="cmd">while</b>.
+Also if the channel is buffered we can send all messages first and iterate to receive using <b class="cmd">range</b> in a single coroutine.</p>
+<pre class="example">
+    package require csp
+    namespace import csp::*
+ 
+    proc senderreceiver {ch} {
+        foreach i {1 2 3 4} {
+            puts &quot;Sending $i&quot;
+            $ch &lt;- $i
+        }
+        puts &quot;Closing channel&quot;
+        $ch close
+        range msg $ch {
+            puts &quot;Message $msg&quot;
+        }
+        puts &quot;Received all&quot;
+    }
+ 
+    channel ch 10
+    go senderreceiver $ch
+ 
+    vwait forever
+</pre>
+<p>Output:</p>
+<pre class="example">
+Sending 1
+Sending 2
+Sending 3
+Sending 4
+Closing channel
+Message 1
+Message 2
+Message 3
+Message 4
+Received all
+</pre>
+</div>
+<div id="subsection4" class="subsection"><h3><a name="subsection4">Example 4</a></h3>
+<p>Channels can be used to coordinate future events. We use <b class="cmd">after</b> to create coroutine that will send to the channel.</p>
+<p>Instead of using direct callback which cannot keep local state we consume events in <b class="cmd">adder</b> which can keep sum in local variable.</p>
+<pre class="example">
+    package require csp
+    namespace import csp::*
+ 
+    proc adder {ch} {
+        set sum 0
+        while 1 {
+            set number [&lt;- $ch]
+            incr sum $number
+            puts &quot;adder received $number. The sum is $sum&quot;
+        }
+    }
+ 
+    proc trigger {ch number} {
+        $ch &lt;- $number
+    }
+ 
+    channel ch
+    go adder $ch
+    after 1000 go trigger $ch 1
+    after 3000 go trigger $ch 3
+    after 5000 go trigger $ch 5
+    puts &quot;Enter event loop&quot;
+ 
+    vwait forever
+</pre>
+<p>Output:</p>
+<pre class="example">
+Enter event loop
+adder received 1. The sum is 1
+adder received 3. The sum is 4
+adder received 5. The sum is 9
+</pre>
+</div>
+<div id="subsection5" class="subsection"><h3><a name="subsection5">Example 5</a></h3>
+<p>Use <b class="cmd">timer</b> to create a channel supplying scheduled messages in the future.</p>
+<pre class="example">
+    package require csp
+    namespace import csp::*
+ 
+    proc future {ch} {
+        try {
+            puts &quot;future happened at  [&lt;- $ch]&quot;
+            puts &quot;try to receive again:&quot;
+            puts &quot;[&lt;- $ch]&quot;
+        } on error {out err} {
+            puts &quot;error: $out&quot;
+        }
+    }
+ 
+    timer ch 2000
+    go future $ch
+    puts &quot;Enter event loop at [clock microseconds]&quot;
+ 
+    vwait forever
+</pre>
+<p>Output:</p>
+<pre class="example">
+Enter event loop at 1434472163190638
+future happened at  1434472165189759
+try to receive again:
+error: Cannot receive from a drained (empty and closed) channel ::csp::Channel#1
+</pre>
+<p>Instead of scheduling events with <b class="cmd">after</b> we can use <b class="cmd">timer</b> to create a special receive only channel. There will be only one message send to this channel after the specified time so we can pass this channel to another coroutine that will wait for that message. The message from the timer channel represents unix epoch time in microseconds. The timer channel will be automatically destroyed after first receive so trying to receive again will throw an error.</p>
+</div>
+<div id="subsection6" class="subsection"><h3><a name="subsection6">Example 6</a></h3>
+<p>Using <b class="cmd">ticker</b> we can create receive only channel from which we can consume timestamp messages at regular intervals.</p>
+<pre class="example">
+    package require csp
+    namespace import csp::*
+ 
+    proc future {ch} {
+        set count 0
+        while 1 {
+            incr count
+            puts &quot;future $count received at [&lt;- $ch]&quot;
+        }
+    }
+ 
+    ticker ch 1000
+    go future $ch
+    puts &quot;Enter event loop at  [clock microseconds]&quot;
+  
+    vwait forever
+</pre>
+<p>Output:</p>
+<pre class="example">
+Enter event loop at  1434472822879684
+future 1 received at 1434472823879110
+future 2 received at 1434472824882163
+future 3 received at 1434472825884246
+...
+</pre>
+</div>
+<div id="subsection7" class="subsection"><h3><a name="subsection7">Example 7</a></h3>
+<p><b class="cmd">ticker</b> command returns the created channel so we can use it in place in combination with <b class="cmd">range</b> to further simplify the example</p>
+<pre class="example">
+    package require csp
+    namespace import csp::*
+ 
+    proc counter {} {
+        range t [ticker ch 1000] {
+            puts &quot;received $t&quot;
+        }
+    }
+ 
+    go counter
+ 
+    vwait forever
+</pre>
+<p>Output:</p>
+<pre class="example">
+received 1434474325947677
+received 1434474326950822
+received 1434474327952904
+...
+</pre>
+</div>
+<div id="subsection8" class="subsection"><h3><a name="subsection8">Example 8</a></h3>
+<p>Another example of using <b class="cmd">ticker</b> to implement the canonical countdown counter from <a href="http://wiki.tcl.tk/946">Tcl wiki</a>.</p>
+<pre class="example">
+    package require Tk
+    package require csp
+    namespace import csp::*
+ 
+    proc countdown {varName} {
+        upvar $varName var
+        range _ [ticker t 1000 #10] {
+            incr var -1
+        }
+    }
+ 
+    set count 10
+    label .counter -font {Helvetica 72} -width 3 -textvariable count
+    grid .counter -padx 100 -pady 100
+    go countdown count
+</pre>
+</div>
+<div id="subsection9" class="subsection"><h3><a name="subsection9">Example 9</a></h3>
+<p>Closing the channel by another scheduled event breaks the <b class="cmd">range</b> loop</p>
+<pre class="example">
+    package require csp
+    namespace import csp::*
+ 
+    proc counter {ch} {
+        range t $ch {
+            puts &quot;received $t&quot;
+        }
+        puts &quot;counter exit&quot;
+    }
+ 
+    ticker ch 1000
+    go counter $ch
+    after 4500 $ch close
+    puts &quot;Enter event loop at [clock microseconds]&quot;
+ 
+    vwait forever
+</pre>
+<p>Output:</p>
+<pre class="example">
+Enter event loop at 1434474384645704
+received 1434474385644900
+received 1434474386648105
+received 1434474387650088
+received 1434474388652345
+counter exit
+</pre>
+</div>
+<div id="subsection10" class="subsection"><h3><a name="subsection10">Example 10</a></h3>
+<p>Redirect callback call argument to a channel using <b class="cmd">-&gt;</b> command.</p>
+<pre class="example">
+    package require http
+    package require csp
+    namespace import csp::*
+ 
+    proc main {} {
+        http::geturl http://securitykiss.com/rest/now -command [-&gt; ch]
+        puts &quot;fetched: [http::data [&lt;- $ch]]&quot;
+    }
+ 
+    go main
+ 
+    vwait forever
+</pre>
+<p>Output:</p>
+<pre class="example">
+fetched: 1434474568
+</pre>
+<p><b class="package">csp</b> package makes it easy to integrate channels and coroutines with existing event driven code.
+Using the <b class="cmd">-&gt;</b> utility command we can make channels work with callback driven commands and at the same time avoid callback hell.</p>
+<p><b class="cmd">-&gt;</b> <i class="arg">ch</i> creates a channel ch and returns a new coroutine that may be used in place of a callback.
+The channel will be destroyed after receiving a single value.
+The single argument passed to the callback will be available to receive from the created channel.</p>
+<p>Such code organization promotes local reasoning - it helps writing linear code with local state kept in proc variables. Otherwise the callback would require keeping state in global variables.</p>
+<p>Note that there is a limitation in replacing callbacks with <b class="cmd">-&gt;</b> command: only a single- or zero- argument callbacks can be replaced.
+In case of zero-argument callbacks an empty string is sent to the channel.</p>
+<p>Note that there is no symmetry in &lt;- &lt;-! -&gt; -&gt;&gt; commands. Every one of them has a different purpose.</p>
+</div>
+<div id="subsection11" class="subsection"><h3><a name="subsection11">Example 11</a></h3>
+<p>Use <b class="cmd">select</b> command to choose ready channels.</p>
+<pre class="example">
+    package require http
+    package require csp
+    namespace import csp::*
+ 
+    proc main {} {
+        http::geturl http://securitykiss.com/rest/slow/now -command [-&gt; ch1]
+        http::geturl http://securitykiss.com/rest/slow/now -command [-&gt; ch2]
+        select {
+            &lt;- $ch1 {
+                puts &quot;from first request: [http::data [&lt;- $ch1]]&quot;
+            }
+            &lt;- $ch2 {
+                puts &quot;from second request: [http::data [&lt;- $ch2]]&quot;
+            }
+        }
+    }
+ 
+    go main
+ 
+    vwait forever
+</pre>
+<p>Output:</p>
+<pre class="example">
+from first request: 1434483100
+</pre>
+<p>Previous example with callback channels does not extend to making parallel http requests because one waiting channel would prevent receiving from the other.
+The <b class="cmd">select</b> command chooses which of a set of possible send or receive operations will proceed. In this example <b class="cmd">select</b> command examines two callback channels and depending on which one is ready for receive first, it evaluates corresponding body block.</p>
+</div>
+<div id="subsection12" class="subsection"><h3><a name="subsection12">Example 12</a></h3>
+<p>Combine <b class="cmd">timer</b> created channel with <b class="cmd">select</b> to enforce timeouts.</p>
+<pre class="example">
+    package require http
+    package require csp
+    namespace import csp::*
+ 
+    proc main {} {
+        http::geturl http://securitykiss.com/rest/slow/now -command [-&gt; ch1]
+        http::geturl http://securitykiss.com/rest/slow/now -command [-&gt; ch2]
+        timer t1 400
+        select {
+            &lt;- $ch1 {
+                puts &quot;from first request: [http::data [&lt;- $ch1]]&quot;
+            }
+            &lt;- $ch2 {
+                puts &quot;from second request: [http::data [&lt;- $ch2]]&quot;
+            }
+            &lt;- $t1 {
+                puts &quot;requests timed out at [&lt;- $t1]&quot;
+            }
+        }
+    }
+ 
+    go main
+ 
+    vwait forever
+</pre>
+<p>Output:</p>
+<pre class="example">
+requests timed out at 1434484003634953
+</pre>
+<p>Since <b class="cmd">select</b> chooses from the set of channels whichever is ready first, by adding the <b class="cmd">timer</b> created channel to select from, we can implement timeout as in the example above.</p>
+</div>
+<div id="subsection13" class="subsection"><h3><a name="subsection13">Example 13</a></h3>
+<p>Use <b class="cmd">select</b> with the default clause.</p>
+<pre class="example">
+    package require http
+    package require csp
+    namespace import csp::*
+ 
+    proc DisplayResult {ch1 ch2} {
+        set result [select {
+            &lt;- $ch1 {
+                http::data [&lt;- $ch1]
+            }
+            &lt;- $ch2 {
+                http::data [&lt;- $ch2]
+            }
+            default {
+                subst &quot;no response was ready&quot;
+            }
+        }]
+        puts &quot;DisplayResult: $result&quot;
+    }
+ 
+    proc main {} {
+        http::geturl http://securitykiss.com/rest/slow/now -command [-&gt; ch1]
+        http::geturl http://securitykiss.com/rest/slow/now -command [-&gt; ch2]
+        after 400 go DisplayResult $ch1 $ch2
+    }
+ 
+    go main
+ 
+    vwait forever
+</pre>
+<p>Output:</p>
+<pre class="example">
+DisplayResult: no response was ready
+</pre>
+<p><b class="cmd">select</b> command is potentially waiting if no channel is ready. Sometimes we need to proceed no matter what so <b class="cmd">select</b> makes it possible to return without waiting if the <b class="cmd">default</b> clause is provided. This example also shows that <b class="cmd">select</b> has a return value. In this case the result returned by <b class="cmd">select</b> is either HTTP response or the value specified in the default block if no channel is ready.</p>
+</div>
+<div id="subsection14" class="subsection"><h3><a name="subsection14">Example 14</a></h3>
+<p>Funnel multiple channels into a single channel using <b class="cmd">forward</b> command.</p>
+<pre class="example">
+    package require http
+    package require csp
+    namespace import csp::*
+ 
+    proc main {} {
+        set urls {
+            http://securitykiss.com
+            http://meetup.com
+            http://reddit.com
+            http://google.com
+            http://twitter.com
+            http://bitcoin.org
+        }
+        channel f
+        foreach url $urls {
+            http::geturl $url -method HEAD -command [-&gt; ch]
+            forward $ch $f
+        }
+        after 200 $f close
+        range token $f {
+            upvar #0 $token state
+            puts &quot;$state(http)\t$state(url)&quot;
+        }
+        puts &quot;main exit&quot;
+    }
+ 
+    go main
+ 
+    vwait forever
+</pre>
+<p>Output:</p>
+<pre class="example">
+HTTP/1.1 302 Found  http://google.com/
+HTTP/1.1 301 Moved Permanently  http://reddit.com/
+HTTP/1.1 301 Moved Permanently  http://securitykiss.com/
+main exit
+</pre>
+<p>When we want to listen on many channels, especially when they are dynamically created for example per URL as in the above example, <b class="cmd">select</b> command becomes awkward because it requires specifying logic for every channel.</p>
+<p>In the example above we spawn a HTTP request for every URL and forward messages from individual &quot;callback channels&quot; into the single &quot;funnel channel&quot; <i class="arg">f</i>. In this way the responses are available in a single channel so we can apply common logic to the results. We also set the timeout for the requests by closing the &quot;funnel channel&quot; after some time. Responses that don't make it within a specified timeout are ignored.</p>
+</div>
+<div id="subsection15" class="subsection"><h3><a name="subsection15">Example 15</a></h3>
+<p>Redirect callback multi call argument to a long-lived channel using <b class="cmd">-&gt;&gt;</b> command.</p>
+<pre class="example">
+    package require Tk
+    package require csp
+    namespace import csp::*
+ 
+    proc main {} {
+        set number 5
+        frame .f
+        button .f.left -text &lt;&lt;&lt; -command [-&gt;&gt; chleft]
+        label .f.lbl -font {Helvetica 24} -text $number
+        button .f.right -text &gt;&gt;&gt; -command [-&gt;&gt; chright]
+        grid .f.left .f.lbl .f.right
+        grid .f
+        while 1 {
+            select {
+                &lt;- $chleft {
+                    &lt;- $chleft
+                    incr number -1
+                }
+                &lt;- $chright {
+                    &lt;- $chright
+                    incr number
+                }
+            }
+            .f.lbl configure -text $number
+        }
+    }
+ 
+    go main
+</pre>
+<p>In previous examples the <b class="cmd">-&gt;</b> command created short-lived disposable callback channels that could be received from only once.
+Often an existing command require a callback that will be called many times over long period of time. In such case <b class="cmd">-&gt;&gt;</b> comes to play. 
+It returns a coroutine that may be called many times in place of the callback. Callback argument is passed to the newly created buffered channel that can be later received from to consume the messages (callback arguments).</p>
+<p>In this example similar functionality could be achieved in a simpler way using <i class="arg">-textvariable</i> on <b class="cmd">label</b> but it would require a global variable instead of local <i class="arg">number</i>.</p>
+<p>The same limitations regarding callback arguments arity apply as for the <b class="cmd">-&gt;</b> command.</p>
+<p>Note that there is no symmetry in &lt;- &lt;-! -&gt; -&gt;&gt; commands. Every one of them has a different purpose.</p>
+</div>
+<div id="subsection16" class="subsection"><h3><a name="subsection16">Example 16</a></h3>
+<p>Channel operations like <b class="cmd">&lt;-</b> and <b class="cmd">range</b> can be used only in coroutines. Using coroutines for channel driven coordination is the recommended way of using <b class="package">csp</b> package.</p>
+<p>It may happen that we need to use channels outside of coroutines. It is possible with corresponding <b class="cmd">&lt;-!</b> and <b class="cmd">range!</b> commands but there are caveats.
+The &quot;bang&quot; terminated commands are implemented using vwait nested calls and have many limitations. Thus they should be used with extra care and only in simple scenarios. Especially it is not guaranteed that they will work correctly if used inside callbacks.</p>
+<p>In this example we show a simple scenario where receiving from the channel in the main script control flow makes sense as a way to synchronize coroutine termination.</p>
+<pre class="example">
+    package require http
+    package require csp
+    namespace import csp::*
+  
+    proc worker {ch_quit} {
+        http::geturl http://securitykiss.com/rest/now -command [-&gt; ch]
+        puts &quot;fetched: [http::data [&lt;- $ch]]&quot;
+        $ch_quit &lt;- 1
+    }
+  
+    # termination coordination channel
+    channel ch_quit
+  
+    go worker $ch_quit
+ 
+    &lt;-! $ch_quit
+</pre>
+<p>Output:</p>
+<pre class="example">
+fetched: 1434556219
+</pre>
+<p>Without the last line the script would exit immediately without giving the coroutine a chance to fetch the url.</p>
+</div>
+<div id="subsection17" class="subsection"><h3><a name="subsection17">Example 17</a></h3>
+<p>Following the &quot;bang&quot; terminated command trail, this example shows how <b class="cmd">range!</b> command may further simplify the previous countdown counter example.</p>
+<pre class="example">
+    package require Tk
+    package require csp
+    namespace import csp::*
+ 
+    set count 5
+    label .counter -font {Helvetica 72} -width 3 -textvariable count
+    grid .counter -padx 100 -pady 100
+    range! _ [ticker t 1000 #$count] {
+        incr count -1
+    }
+</pre>
+</div>
+<div id="subsection18" class="subsection"><h3><a name="subsection18">Example 18</a></h3>
+<p>A more complex example using the already discussed constructs.</p>
+<pre class="example">
+    # A simple web crawler/scraper demonstrating the csp style programming in Tcl
+    # In this example we have 2 coroutines: a crawler and a parser communicating over 2 channels.
+    # The crawler receives the url to process from the urls channel and spawns a http request
+    # Immediately sends the pair: (url, callback channel from http request) 
+    # into a pending requests channel for further processing by the parser.
+    # The parser receives the http token from the received callback channel 
+    # and fetches the page content from the url in order to extract more urls.
+    # The new urls are sent to the urls channel where the crawler takes over again.
+  
+    package require http
+    package require csp
+    namespace import csp::*
+ 
+    # The crawler coroutine is initialized with 3 channels:
+    # urls - channel with urls waiting to process
+    # requests - channel with pending http requests
+    # quit - synchronization channel to communicate end of coroutine
+    proc crawler {urls requests quit} {
+        # list of visited urls
+        set visited {}
+        range url $urls {
+            if {$url ni $visited} {
+                http::geturl $url -command [-&gt; req]
+                lappend visited $url
+                # note we are passing channel object over a channel
+                $requests &lt;- [list $url $req]
+            }
+        }
+        $quit &lt;- 1
+    }
+ 
+ 
+    # The parser coroutine is initialized with 3 channels:
+    # urls - channel with urls waiting to process
+    # requests - channel with pending http requests
+    # quit - synchronization channel to communicate end of coroutine
+    proc parser {urls requests quit} {
+        set count 0
+        range msg $requests {
+            lassign $msg url req
+            timer timeout 5000
+            select {
+                &lt;- $req {
+                    set token [&lt;- $req]
+                    set data [http::data $token]
+                    puts &quot;Fetched URL $url with content size [string length $data] bytes&quot;
+                    foreach {_ href} [regexp -nocase -all -inline {href=&quot;(.*?)&quot;} $data] {
+                        if {![string match http:* $href] &amp;&amp; ![string match mailto:* $href]} {
+                            # catch error if channel has been closed
+                            $urls &lt;- [create_url $url $href]
+                        }
+                    }
+                }
+                &lt;- $timeout {
+                    &lt;- $timeout
+                    puts &quot;Request to $url timed out&quot;
+                }
+            }
+            # we stop after fetching 10 urls
+            if {[incr count] &gt;= 10} {
+                $urls close
+                $requests close
+            }
+        }
+        $quit &lt;- 1
+    }
+ 
+    # utility function to construct urls
+    proc create_url {current href} {
+        regexp {(http://[^/]*)(.*)} $current _ base path
+        if {[string match /* $href]} {
+            return $base$href
+        } else {
+            return $current$href
+        }
+    }
+ 
+ 
+    # channel containing urls to process
+    # this channel must have rather large buffer so that the urls to crawl can queue
+    channel urls 10000
+    # channel containing (url req) pairs representing pending http requests
+    # size of this channel determines parallelism i.e. the maximum number of pending requests at the same time
+    channel requests 3
+    # coordination channels that make the main program wait until coroutines end
+    channel crawler_quit
+    channel parser_quit
+    go crawler $urls $requests $crawler_quit
+    go parser $urls $requests $parser_quit
+ 
+    # send the seed url to initiate crawling
+    $urls &lt;-! &quot;http://www.tcl.tk/man/tcl8.6/&quot;
+ 
+    # Gracefully exit - wait for coroutines to complete
+    &lt;-! $crawler_quit
+    &lt;-! $parser_quit
+</pre>
+<p>In particular it is worth noting:</p>
+<ul class="itemized">
+<li><p>it is possible to pass a channel object over another channel</p></li>
+<li><p>use of <i class="arg">quit</i> synchronization channel to communicate end of coroutine</p></li>
+<li><p>closing channels as a way to terminate <b class="cmd">range</b> iteration</p></li>
+</ul>
+</div>
+</div>
+<div id="keywords" class="section"><h2><a name="keywords">Keywords</a></h2>
+<p>actors, callback, channel, concurrency, csp, golang</p>
+</div>
+<div id="category" class="section"><h2><a name="category">Category</a></h2>
+<p>Concurrency</p>
+</div>
+<div id="copyright" class="section"><h2><a name="copyright">Copyright</a></h2>
+<p>Copyright &copy; 2015 SecurityKISS Ltd &lt;open.source@securitykiss.com&gt; - MIT License - Feedback and bug reports are welcome</p>
+</div>
+</div></body></html>

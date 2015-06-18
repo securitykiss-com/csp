@@ -1,0 +1,207 @@
+
+if {"::tcltest" ne [namespace children]} {
+    package require tcltest
+    namespace import -force ::tcltest::*
+    #tcltest::configure -match {csp-1.1 csp-1.2 csp-1.3 csp-1.4 csp-1.5 csp-1.6}
+    #tcltest::configure -match {csp-1.7}
+    tcltest::configure -debug 0
+}
+if {"::csp" ne [namespace children]} {
+    lappend auto_path [file normalize ./lib/generic]
+    package require csp
+    namespace import csp::*
+}
+
+test csp-1.1 {simple sender receiver rendez-vous} -body {
+    proc sender {ch} {
+        foreach i {1 2 3 4} {
+            puts -nonewline i$i
+            $ch <- $i
+        }
+    }
+    proc receiver {ch} {
+        while 1 {
+            puts -nonewline o[<- $ch]
+        }
+    }
+    channel ch
+    go sender $ch
+    go receiver $ch
+    after 501 set little 1
+    vwait little
+    return
+} -output {i1o1i2o2i3o3i4o4}
+
+test csp-1.2 {simple sender receiver buffered channel with close} -body {
+    proc sender {ch} {
+        foreach i {1 2 3 4} {
+            puts -nonewline i$i
+            $ch <- $i
+        }
+        puts -nonewline close
+        $ch close
+    }
+    proc receiver {ch} {
+        try {
+            while 1 {
+                puts -nonewline o[<- $ch]
+            }
+        } on error {} {
+        }
+    }
+    channel ch 2
+    go sender $ch
+    go receiver $ch
+    after 502 set little 1
+    vwait little
+    return
+} -output {i1i2i3o1o2i4closeo3o4}
+
+test csp-1.3 {ping pong rendez-vous} -body {
+    proc p1 {chin chout} {
+        while 1 {
+            $chout <- [<- $chin]
+        }
+    }
+    proc p2 {chin chout} {
+        foreach i {1 2 3 4} {
+            puts -nonewline $i
+            $chout <- $i
+            puts -nonewline [<- $chin]
+        }
+    }
+    channel {ch1 ch2}
+    go p1 $ch1 $ch2
+    go p2 $ch2 $ch1
+    after 503 set little 1
+    vwait little
+    $ch1 close
+    $ch2 close
+    return
+} -output {11223344}
+
+
+test csp-1.4 {ping pong buffered channels} -body {
+    proc p1 {chin chout} {
+        while 1 {
+            $chout <- [<- $chin]
+        }
+    }
+    proc p2 {chin chout} {
+        foreach i {1 2 3 4} {
+            puts -nonewline $i
+            $chout <- $i
+            puts -nonewline [<- $chin]
+        }
+    }
+    channel {ch1 ch2} 5
+    go p1 $ch1 $ch2
+    go p2 $ch2 $ch1
+    after 504 set little 1
+    vwait little
+    $ch1 close
+    $ch2 close
+    return
+} -output {11223344}
+
+
+test csp-1.5 {sync coroutine with main control flow} -body {
+    proc p1 {ch} {
+        puts -nonewline [<- $ch]
+    }
+    channel ch
+    go p1 $ch
+    puts -nonewline a
+    # this will be run outside of coroutine
+    after 200 $ch <-! 1
+    puts -nonewline b
+    after 505 set little 1
+    vwait little
+    puts -nonewline c
+    $ch close
+    return
+} -output {ab1c}
+
+
+test csp-1.6 {sync coroutine with main control flow - reverse} -body {
+    proc p1 {ch} {
+        foreach i {1 2 3} {
+            puts -nonewline i$i
+            $ch <- $i
+        }
+    }
+    channel ch
+    go p1 $ch
+    puts -nonewline a
+    # this will be run out of coroutine
+    after 200 puts -nonewline o\[<-! $ch\]
+    puts -nonewline b
+    after 300 puts -nonewline o\[<-! $ch\]
+    puts -nonewline c
+    after 400 puts -nonewline o\[<-! $ch\]
+    puts -nonewline d
+    after 506 set little 1
+    vwait little
+    puts -nonewline e
+    $ch close
+    return
+} -output {i1abcdo1i2o2i3o3e}
+
+
+test csp-1.7 {simple timer} -body {
+    timer ch 200
+    puts -nonewline [<-! $ch]
+    return
+} -match regexp -output {^\d{16}$}
+
+test csp-1.8 {simple ticker} -body {
+    ticker ch 508
+    foreach i {1 2 3} {
+        puts -nonewline "[<-! $ch] "
+    }
+    $ch close
+    return
+} -match regexp -output {^(\d{16} ){3}$}
+
+test csp-1.9 {range in coroutine} -body {
+    set callback [->> ch]
+    after 100 $callback a
+    after 200 $callback b
+    after 300 $callback c
+    after 400 $ch close
+    proc p1 {ch} {
+        range v $ch {
+            puts -nonewline $v
+        }
+        puts -nonewline d
+    }
+    go p1 $ch
+    after 509 set little 1
+    vwait little
+    return
+} -output {abcd}
+
+test csp-1.10 {range! in main} -body {
+    set callback [->> ch]
+    after 100 $callback a
+    after 200 $callback b
+    after 300 $callback c
+    after 400 $ch close
+    range! v $ch {
+        puts -nonewline $v
+    }
+    puts -nonewline d
+    return
+} -output {abcd}
+
+test csp-1.11 {} -body {
+    return
+}
+
+test csp-1.12 {} -body {
+    return
+}
+
+::tcltest::cleanupTests
+return
+
