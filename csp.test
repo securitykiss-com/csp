@@ -1,16 +1,11 @@
+package require tcltest
+namespace import -force ::tcltest::*
+#tcltest::configure -match {csp-1.1 csp-1.2 csp-1.3 csp-1.4 csp-1.5 csp-1.6}
+tcltest::configure -debug 0
 
-if {"::tcltest" ne [namespace children]} {
-    package require tcltest
-    namespace import -force ::tcltest::*
-    #tcltest::configure -match {csp-1.1 csp-1.2 csp-1.3 csp-1.4 csp-1.5 csp-1.6}
-    #tcltest::configure -match {csp-1.7}
-    tcltest::configure -debug 0
-}
-if {"::csp" ne [namespace children]} {
-    lappend auto_path [file normalize ./lib/generic]
-    package require csp
-    namespace import csp::*
-}
+lappend auto_path [file normalize .]
+package require csp
+namespace import csp::*
 
 test csp-1.1 {simple sender receiver rendez-vous} -body {
     proc sender {ch} {

@@ -64,7 +64,7 @@ This concurrency model may also be seen as a generalization of Unix [uri https:/
     [para]
     [cmd ::csp::channel] [arg chanVar] [arg [opt size]]
     [para]
-    If the size is zero (default) the created channel is unbuffered.
+    Where the optional paramter [arg size] specifies the maximum number of messages that can be buffered in the channel. If the size is zero (default) the created channel is unbuffered.
     [para]
     Channel may be closed with:
     [para]
@@ -131,7 +131,7 @@ This concurrency model may also be seen as a generalization of Unix [uri https:/
         [arg_def var channelVar] 
             Variable channelVar that will be created and will contiain the channel object name.
         [arg_def number size] 
-            Size of the channel buffer. If size is zero (default) the channel is unbuffered.
+            Size of the channel buffer understood as the maximum number of messages that can be buffered in the channel. If size is zero (default) the channel is unbuffered.
     [list_end]
     Returns channel object name.
     

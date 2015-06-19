@@ -200,7 +200,7 @@ Since it must work in a single-threaded interpreter, waiting is non-blocking. In
 </dl>
 <p>Channel is created with:</p>
 <p><b class="cmd">::csp::channel</b> <i class="arg">chanVar</i> <i class="arg"><span class="opt">?size?</span></i></p>
-<p>If the size is zero (default) the created channel is unbuffered.</p>
+<p>Where the optional paramter <i class="arg">size</i> specifies the maximum number of messages that can be buffered in the channel. If the size is zero (default) the created channel is unbuffered.</p>
 <p>Channel may be closed with:</p>
 <p><b class="cmd">channelObj</b> <i class="arg">close</i></p>
 <p>and is destroyed automatically when all messages are received (the channel is drained).</p>
@@ -244,7 +244,7 @@ Since it must work in a single-threaded interpreter, waiting is non-blocking. In
 <dt>var <i class="arg">channelVar</i></dt>
 <dd><p>Variable channelVar that will be created and will contiain the channel object name.</p></dd>
 <dt>number <i class="arg">size</i></dt>
-<dd><p>Size of the channel buffer. If size is zero (default) the channel is unbuffered.</p></dd>
+<dd><p>Size of the channel buffer understood as the maximum number of messages that can be buffered in the channel. If size is zero (default) the channel is unbuffered.</p></dd>
 </dl>
 <p>Returns channel object name.</p></dd>
 <dt><a name="3"><b class="cmd">channelObj</b> <i class="arg">close</i></a></dt>
