@@ -200,7 +200,8 @@ Since it must work in a single-threaded interpreter, waiting is non-blocking. In
 </dl>
 <p>Channel is created with:</p>
 <p><b class="cmd">::csp::channel</b> <i class="arg">chanVar</i> <i class="arg"><span class="opt">?size?</span></i></p>
-<p>Where the optional paramter <i class="arg">size</i> specifies the maximum number of messages that can be buffered in the channel. If the size is zero (default) the created channel is unbuffered.</p>
+<p>Where the optional parameter <i class="arg">size</i> specifies the maximum number of messages that can be stored in the channel. When the channel is full the sender trying to send more messages to it must wait until any receiver offloads the channel. Waiting means that the sender gives way to other coroutines.</p>
+<p>If the size is zero (default) the created channel is unbuffered which means that the sender coroutine always waits for the receiver to collect the message.</p>
 <p>Channel may be closed with:</p>
 <p><b class="cmd">channelObj</b> <i class="arg">close</i></p>
 <p>and is destroyed automatically when all messages are received (the channel is drained).</p>

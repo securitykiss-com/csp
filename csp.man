@@ -64,7 +64,9 @@ This concurrency model may also be seen as a generalization of Unix [uri https:/
     [para]
     [cmd ::csp::channel] [arg chanVar] [arg [opt size]]
     [para]
-    Where the optional paramter [arg size] specifies the maximum number of messages that can be buffered in the channel. If the size is zero (default) the created channel is unbuffered.
+    Where the optional parameter [arg size] specifies the maximum number of messages that can be stored in the channel. When the channel is full the sender trying to send more messages to it must wait until any receiver offloads the channel. Waiting means that the sender gives way to other coroutines.
+    [para]
+    If the size is zero (default) the created channel is unbuffered which means that the sender coroutine always waits for the receiver to collect the message.
     [para]
     Channel may be closed with:
     [para]
