@@ -1,7 +1,5 @@
 ## csp - Golang inspired concurrency library for Tcl
 
-`csp` is a Tcl library for doing Golang style concurrency based on Communicating Sequential Processes. 
-
 The csp package for Tcl is a concurrency library based on Communicating Sequential Processes and provides two primitives namely coroutines and channels which allow concurrent programming in the style of Golang.
 
 The concepts originate in Hoare's Communicating Sequential Processes while the syntax mimics the Golang implementation.
