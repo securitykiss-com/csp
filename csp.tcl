@@ -43,7 +43,7 @@ namespace eval csp {
     # counter/uid to produce unique Routine and Channel names
     variable Uid 0
 
-    namespace export go channel select timer ticker range range! <- <-! -> ->> forward
+    namespace export go channel select timer ticker tickernow range range! <- <-! -> ->> forward
     namespace ensemble create
 }
 
