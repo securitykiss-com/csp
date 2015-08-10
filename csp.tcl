@@ -510,12 +510,20 @@ proc ::csp::TickerRoutine {ch interval closeafter} {
 }
 
 proc ::csp::ticker {chVar interval {closeafter 0}} {
+    return ticker_generic $chVar $interval $interval $closeafter
+}
+
+proc ::csp::tickernow {chVar interval {closeafter 0}} {
+    return ticker_generic $chVar 0 $interval $closeafter
+}
+
+proc ::csp::ticker_generic {chVar initial_interval interval closeafter} {
     upvar $chVar ch
     csp::channel ch
     if {$closeafter != 0 && [string is integer -strict $closeafter]} {
         after $closeafter $ch close
     }
-    after $interval csp::go TickerRoutine $ch $interval $closeafter
+    after $initial_interval csp::go TickerRoutine $ch $interval $closeafter
     return $ch
 }
 
