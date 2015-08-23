@@ -199,7 +199,6 @@ proc ::csp::CClosed {ch} {
 proc ::csp::CAppend {ch val} {
     variable Channel
     lappend Channel($ch) $val
-    #puts "Channel($ch) after CAppend: $Channel($ch)"
     return
 }
 
@@ -249,7 +248,6 @@ proc ::csp::NewChannel {} {
 # args should be proc name and arguments
 proc ::csp::go {args} {
     variable Routine
-    # args contain the routine name with arguments
     set rname [::csp::NewRoutine]
     coroutine $rname {*}$args
     set Routine($rname) 1
@@ -274,8 +272,6 @@ proc ::csp::Resume {} {
             # cannot run the already running coroutine - catch error when it happens
             # this may regularly throw 'coroutine "::csp::Routine#N" is already running'
             catch $r
-            #if {[catch {$r} out err]} 
-                #puts stderr "OUT: $out, ERR: $err"
             
         }
     }
@@ -329,9 +325,8 @@ proc ::csp::<- {ch} {
 
 # Receive from channel, wait if channel not ready, throw error if channel is drained
 # Can be used from non-coroutine
-# Uses vwait for wait => nested event loops
-# It means that not ready channel in nested vwait 
-# may block an upstream channel that become ready
+# Uses vwait for wait. It means it creates nested event loops
+# Not ready channel in nested vwait may block an upstream channel that became ready
 # Use with care. Avoid if you can.
 proc ::csp::<-! {ch} {
     return [ReceiveWith $ch <-!]
@@ -510,19 +505,20 @@ proc ::csp::TickerRoutine {ch interval closeafter} {
      }
 }
 
+# Return ticker channel. First tick in $interval ms
 proc ::csp::ticker {chVar interval {closeafter 0}} {
     return [ticker_generic $chVar $interval $interval $closeafter]
 }
 
+# Return ticker channel. First tick immediately.
 proc ::csp::tickernow {chVar interval {closeafter 0}} {
     return [ticker_generic $chVar 0 $interval $closeafter]
 }
 
+# Generic internal ticker function
 proc ::csp::ticker_generic {chVar initial_interval interval closeafter} {
     upvar 2 $chVar ch
     csp::channel ch
-#    puts stderr "CSP: chVar: $chVar"
-#    puts stderr "CSP: ch: $ch"
     if {$closeafter != 0 && [string is integer -strict $closeafter]} {
         after $closeafter $ch close
     }
