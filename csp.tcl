@@ -140,14 +140,15 @@ proc ::csp::CReceiveReady {ch} {
 
 # remove the channel completely
 proc ::csp::CPurge {ch} {
+    variable Channel
+    variable ChannelCap
+    variable ChannelReadOnly
     CheckName $ch
-    catch {
-        unset Channel($ch)
-        unset ChannelCap($ch)
-        unset ChannelReadOnly($ch)
-        rename $ch ""
-        SetResume
-    }
+    catch {unset Channel($ch)}
+    catch {unset ChannelCap($ch)}
+    catch {unset ChannelReadOnly($ch)}
+    catch {rename $ch ""}
+    catch {SetResume}
 }
 
 
