@@ -20,7 +20,7 @@ The [package csp] package provides two concurrency primitives namely [term corou
 The concepts originate in Hoare's [uri https://en.wikipedia.org/wiki/Communicating_sequential_processes {Communicating Sequential Processes}] while the syntax mimics the Golang implementation.
 [para]
 The CSP concurrency model may be visualized as a set of independent processes (coroutines) sending and receiving messages to the named channels. The control flow in the coroutines is coordinated at the points of sending and receiving messages i.e. the coroutine may need to wait while trying to send or receive.
-Since it must work in a single-threaded interpreter, waiting is non-blocking. Instead of blocking a waiting coroutine gives way to other coroutines.
+Since it must work in a single-threaded interpreter, waiting is non-blocking. Instead of blocking the waiting coroutine gives way to other coroutines.
 [para]
 This concurrency model may also be seen as a generalization of Unix [uri https://en.wikipedia.org/wiki/Named_pipe {named pipes}] where processes and pipes correspond to coroutines and channels.
 
@@ -55,7 +55,7 @@ This concurrency model may also be seen as a generalization of Unix [uri https:/
     
         [def [term {ready for send}]]
             The buffered channel is ready for send when it is not full.
-            The unbuffered channel is ready for send if there is no other sender already waiting on this channel. Note that 
+            The unbuffered channel is ready for send if there is no other sender already waiting on this channel.
         [list_end]
     [list_end]
 
