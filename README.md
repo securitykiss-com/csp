@@ -21,7 +21,7 @@ This concurrency model may also be seen as a generalization of Unix named pipes 
 
 ### Example
 
-```
+```tcl
 
     package require http
     package require csp
