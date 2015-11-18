@@ -18,3 +18,35 @@ This concurrency model may also be seen as a generalization of Unix named pipes 
 
 
 [Intro] (https://securitykiss.com/resources/tutorials/csp_project/index.php)
+
+### Example
+
+```
+
+    package require http
+    package require csp
+    namespace import csp::*
+ 
+    proc main {} {
+        http::geturl http://securitykiss.com/rest/slow/now -command [-> ch1]
+        http::geturl http://securitykiss.com/rest/slow/now -command [-> ch2]
+        timer t1 400
+        select {
+            <- $ch1 {
+                puts "from first request: [http::data [<- $ch1]]"
+            }
+            <- $ch2 {
+                puts "from second request: [http::data [<- $ch2]]"
+            }
+            <- $t1 {
+                puts "requests timed out at [<- $t1]"
+            }
+        }
+    }
+ 
+    go main
+ 
+    vwait forever
+
+```
+
