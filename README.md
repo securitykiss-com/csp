@@ -10,14 +10,9 @@ This concurrency model may also be seen as a generalization of Unix named pipes 
 
 
 
-[Documentation] (https://securitykiss.com/resources/tutorials/csp_project/csp.html)
+[Documentation] ([https://securitykiss.com/resources/tutorials/csp_project/csp.html](https://securitykiss-com.github.io/csp/csp.html))
 
 
-
-
-
-
-[Intro] (https://securitykiss.com/resources/tutorials/csp_project/index.php)
 
 ### Example
 
